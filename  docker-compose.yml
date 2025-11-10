@@ -2,31 +2,32 @@ version: "3.8"
 
 services:
   mysql:
-    image: mysql:8.0
     container_name: mysql
+    image: mysql:8.0
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: devops
     ports:
       - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - appnet
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    volumes:
-      - mysql-data:/var/lib/mysql
-    networks:
-      - appnet
 
   node-app:
     build: .
     container_name: node-app
     restart: always
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy  # wait for MySQL to be ready
     environment:
       DB_HOST: mysql
       DB_USER: root
